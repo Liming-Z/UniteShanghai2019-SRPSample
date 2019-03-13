@@ -1,4 +1,4 @@
-﻿Shader "ExtendingLWRP/Opaque as refraction(no grab)"
+﻿Shader "ExtendingLWRP/Opaque As Refraction(no grab)"
 {
 	Properties
 	{
@@ -20,8 +20,8 @@
 
 			HLSLPROGRAM
 			// Required to compile gles 2.0 with standard srp library
-			//#pragma prefer_hlslcc gles
-			//#pragma exclude_renderers d3d11_9x
+			#pragma prefer_hlslcc gles
+			#pragma exclude_renderers d3d11_9x
 
 			#pragma vertex vert
 			#pragma fragment frag
@@ -51,15 +51,9 @@
 				return viewNormal.xz * 0.5;
 			}
 
-			//half3 Refraction(half2 distortion, half mip)
-			//{
-			//	half3 refrac = SAMPLE_TEXTURE2D_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture_linear_clamp, distortion, mip);
-			//	return refrac;
-			//}
-
-			half3 RefractionSimple(half2 uv)
+			half3 Refraction(half2 distortion)
 			{
-				half3 refrac = SAMPLE_TEXTURE2D_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture_linear_clamp, uv, 0).xyz;
+				half3 refrac = SAMPLE_TEXTURE2D_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture_linear_clamp, distortion, 0);
 				return refrac;
 			}
 
@@ -72,11 +66,9 @@
 			struct Varyings
 			{
 				float4 vertex					: SV_POSITION;
-				float4 uvGrab		            : TEXCOORD0; 
 				float2 uvBump					: TEXCOORD1;
 				float3 uvMain					: TEXCOORD2; // xy: uv0, z: fogCoord
-				half4  screenCoord				: TEXCOORD6;	// for ssshadows
-				float3	posWS					: TEXCOORD4;	// world position of the vertices
+				half4  screenCoord				: TEXCOORD3;	// for ssshadows
 			};
 
 
@@ -91,13 +83,10 @@
 #else
 				float scale = 1.0;
 #endif
-				output.uvGrab.xy = (float2(output.vertex.x, output.vertex.y*scale) + output.vertex.w) * 0.5;
-				output.uvGrab.zw = output.vertex.zw;
 				output.uvBump = TRANSFORM_TEX(input.texcoord, _BumpMap);
 				output.uvMain.xy = TRANSFORM_TEX(input.texcoord, _MainTex);
 				output.uvMain.z = ComputeFogFactor(vertexInput.positionCS.z);
 
-				output.posWS = TransformObjectToWorld(input.positionOS.xyz);
 				output.screenCoord = ComputeScreenPos(output.vertex);
 
 				return output;
@@ -108,23 +97,17 @@
 				// calculate perturbed coordinates
 				// we could optimize this by just reading the x & y without reconstructing the Z
 				half2 bump = UnpackNormal(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uvBump)).rg;
-				//float2 offset = bump * _BumpAmt * _GrabBlurTexture_TexelSize.xy;
-				//input.uvGrab.xy = offset * input.uvGrab.z + input.uvGrab.xy;
-
-				half4 col = 0;// = tex2Dproj(_GrabBlurTexture, input.uvGrab);
 				half4 tint = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uvMain.xy);
 
 				half3 screenUV = input.screenCoord.xyz / input.screenCoord.w;//screen UVs
+				half2 distortion = screenUV.xy + bump.xy *_BumpAmt;
 
-				//half2 distortion = bump * _BumpAmt.xx;
-				half2 distortion = screenUV.xy + bump.xy *_BumpAmt;// distortion;// * clamp(depth.x, 0, 5);
-
-				col.rgb = RefractionSimple(distortion.xy);
+				half4 col = 1;
+				col.rgb = Refraction(distortion.xy);
 				col = lerp(col, tint, _TintAmt);
 
 				col.xyz = MixFog(col.xyz, input.uvMain.z);
 
-				//col.xyz = _BumpAmt;
 				return col;
 			}
 			ENDHLSL
