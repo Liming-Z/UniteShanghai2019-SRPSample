@@ -32,7 +32,7 @@
 
 
 			CBUFFER_START(UnityPerMaterial)
-			half _BumpAmt;
+				half _BumpAmt;
 				half _TintAmt;
 				half4 _BumpMap_ST;
 				half4 _MainTex_ST;
@@ -77,7 +77,6 @@
 				float3 uvMain					: TEXCOORD2; // xy: uv0, z: fogCoord
 				half4  screenCoord				: TEXCOORD6;	// for ssshadows
 				float3	posWS					: TEXCOORD4;	// world position of the vertices
-				//float4	clipPos					: SV_POSITION;
 			};
 
 
@@ -99,7 +98,6 @@
 				output.uvMain.z = ComputeFogFactor(vertexInput.positionCS.z);
 
 				output.posWS = TransformObjectToWorld(input.positionOS.xyz);
-				//output.clipPos = TransformWorldToHClip(output.posWS);
 				output.screenCoord = ComputeScreenPos(output.vertex);
 
 				return output;
