@@ -1,4 +1,4 @@
-﻿Shader "ExtendingLWRP/Opaque as refraction(no grab)"
+﻿Shader "UniteShanghai2019/Opaque as refraction"
 {
 	Properties
 	{
