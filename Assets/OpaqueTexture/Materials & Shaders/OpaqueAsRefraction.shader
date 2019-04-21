@@ -51,13 +51,7 @@
 				return viewNormal.xz * 0.5;
 			}
 
-			//half3 Refraction(half2 distortion, half mip)
-			//{
-			//	half3 refrac = SAMPLE_TEXTURE2D_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture_linear_clamp, distortion, mip);
-			//	return refrac;
-			//}
-
-			half3 RefractionSimple(half2 uv)
+			half3 Refraction(half2 uv)
 			{
 				half3 refrac = SAMPLE_TEXTURE2D_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture_linear_clamp, uv, 0).xyz;
 				return refrac;
@@ -108,23 +102,19 @@
 				// calculate perturbed coordinates
 				// we could optimize this by just reading the x & y without reconstructing the Z
 				half2 bump = UnpackNormal(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uvBump)).rg;
-				//float2 offset = bump * _BumpAmt * _GrabBlurTexture_TexelSize.xy;
-				//input.uvGrab.xy = offset * input.uvGrab.z + input.uvGrab.xy;
 
-				half4 col = 0;// = tex2Dproj(_GrabBlurTexture, input.uvGrab);
+				half4 col = 0;
 				half4 tint = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uvMain.xy);
 
 				half3 screenUV = input.screenCoord.xyz / input.screenCoord.w;//screen UVs
 
-				//half2 distortion = bump * _BumpAmt.xx;
 				half2 distortion = screenUV.xy + bump.xy *_BumpAmt;// distortion;// * clamp(depth.x, 0, 5);
 
-				col.rgb = RefractionSimple(distortion.xy);
+				col.rgb = Refraction(distortion.xy);
 				col = lerp(col, tint, _TintAmt);
 
 				col.xyz = MixFog(col.xyz, input.uvMain.z);
 
-				//col.xyz = _BumpAmt;
 				return col;
 			}
 			ENDHLSL
