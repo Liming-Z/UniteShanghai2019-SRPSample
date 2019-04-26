@@ -7,6 +7,11 @@ namespace UnityEngine.Rendering.LWRP
     /// </summary>
     internal class DrawSkyboxPass : ScriptableRenderPass
     {
+
+        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
+        {
+            overrideCameraTarget = true;
+        }
         public DrawSkyboxPass(RenderPassEvent evt)
         {
             renderPassEvent = evt;
